@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EcoKids Pro Interface — Buttons, QR, Game, Photo, API</title>
+  <meta name="description" content="Full interface with colored buttons, QR & photo identify, mini‑games, penalties, details, plus web API stubs." />
+
+  <!-- html5‑qrcode library for QR scanning -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f3faf1;
+      --card: #ffffff;
+      --primary: #007718;
+      --accent: #f59e0b;
+      --muted: #6b7280;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --success: #10b981;
+      --radius: 12px;
+      --shadow: 0 6px 18px rgba(15,23,42,0.08);
+      --mono: "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: var(--mono);
+      background: var(--bg);
+      color: #0f172a;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .section {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      color: var(--primary);
+    }
+
+    /* Button Styles */
+    .btn {
+      font-size: 18px;
+      padding: 14px 24px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.3s ease, box-shadow 0.2s ease, transform 0.1s ease;
+      min-width: 200px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 8px;
+    }
+    .btn:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    .btn-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-info { background: var(--info); color: white; }
+    .btn-warning { background: var(--accent); color: #0f172a; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+
+    .icon {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+
+    /* Stage / Section Visibility */
+    .stage {
+      display: none;
+    }
+    .stage.active {
+      display: block;
+    }
+
+    /* QR Reader Style */
+    #qr-reader {
+      width: 300px;
+      margin-top: 20px;
+    }
+
+    /* Photo , Game, Details section style */
+    #photoPreview img {
+      max-width: 300px;
+      border-radius: 8px;
+      margin-top: 12px;
+      border: 1px solid var(--muted);
+    }
+
+    /* Details Panel */
+    .details-panel {
+      display: none;
+      margin-top: 20px;
+      border-top: 1px solid var(--muted);
+      padding-top: 12px;
+    }
+    .details-panel strong {
+      color: var(--primary);
+    }
+
+    /* API message panel */
+    .api-message {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EcoKids Pro / Full Access Interface</h1>
+
+    <!-- User Info Panel -->
+    <div class="section">
+      <h2>User Info</h2>
+      <div>Username: <span id="userName">Guest</span></div>
+      <div>Points: <span id="userPoints">0</span></div>
+      <div>Penalties: <span id="userPenalties">0</span></div>
+    </div>
+
+    <!-- Buttons Panel -->
+    <div class="section">
+      <h2>Actions</h2>
+      <div>
+        <button class="btn btn-primary" onclick="openSection('QRSection')">
+          <span class="icon">📷</span> QR Scan
+        </button>
+        <button class="btn btn-info" onclick="openSection('PhotoSection')">
+          <span class="icon">🖼️</span> Photo Identify
+        </button>
+        <button class="btn btn-success" onclick="openSection('GameSection')">
+          <span class="icon">🎮</span> Play Mini Game
+        </button>
+        <button class="btn btn-danger" onclick="wrongClassification()">
+          <span class="icon">⚠️</span> Wrong Classification (Penalty)
+        </button>
+        <button class="btn btn-outline" onclick="openSection('DetailsSection')">
+          <span class="icon">ℹ️</span> View Details
+        </button>
+      </div>
+    </div>
+
+    <!-- Interface Sections -->
+    <!-- QR Scan Section -->
+    <div id="QRSection" class="section stage active">
+      <h2>QR / Camera Scanner</h2>
+      <div id="qr-reader"></div>
+      <div id="qrResultArea" style="margin-top:16px">No scan yet.</div>
+      <button class="btn btn-success" onclick="startQRScanner()">Start QR Scanner</button>
+      <button id="stopQRBtn" class="btn btn-primary btn-disabled" onclick="stopQRScanner()">Stop QR Scanner</button>
+      <div class="api-message" id="qrApiMessage"></div>
+    </div>
+
+    <!-- Photo Identify Section -->
+    <div id="PhotoSection" class="section stage">
+      <h2>Photo Identify</h2>
+      <input type="file" id="photoInput" accept="image/*" onchange="identifyPhoto(event)" />
+      <div id="photoPreview">No image selected.</div>
+      <div id="photoResult" style="margin-top:16px"></div>
+      <div class="api-message" id="photoApiMessage"></div>
+    </div>
+
+    <!-- Game Section -->
+    <div id="GameSection" class="section stage">
+      <h2>Mini Game: Sort & Earn</h2>
+      <p>Sort items correctly to earn points. Game lasts 30 seconds.</p>
+      <button class="btn btn-primary" onclick="startGame()">Start Game</button>
+      <div id="gameTimer" style="margin-top:12px">Time: 30s</div>
+      <div id="gameScore" style="margin-top:12px">Score: 0</div>
+      <div class="api-message" id="gameApiMessage"></div>
+    </div>
+
+    <!-- Details Section -->
+    <div id="DetailsSection" class="section stage">
+      <h2>Details & Information</h2>
+      <p>Last identified category: <span id="lastCategory">None</span></p>
+      <div class="details-panel" id="detailPanel">
+        <p><strong>Name:</strong> <span id="detailName"></span></p>
+        <p><strong>Description:</strong> <span id="detailDesc"></span></p>
+        <p><strong>Disposal Method:</strong> <span id="detailDisposal"></span></p>
+        <p><strong>Tips:</strong></p>
+        <ul id="detailTips"></ul>
+      </div>
+    </div>
+
+    <!-- Web API Simulation / Access Panel -->
+    <div class="section">
+      <h2>API Access Info</h2>
+      <button class="btn btn-info" onclick="fetchWasteCategories()">Fetch Waste Categories (API)</button>
+      <div id="apiCategoriesOutput" style="margin-top:12px"></div>
+
+      <button class="btn btn-info" onclick="submitClassification()">Submit Classification (API)</button>
+      <div id="apiSubmitOutput" style="margin-top:12px"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Application State
+    const app = {
+      points: 0,
+      penalties: 0,
+      lastCategory: null,
+      qrScanner: null,
+      gameTimerInterval: null,
+      gameTimeLeft: 30,
+      gameScore: 0
+    };
+
+    // Update UI
+    function updatePointsDisplay() {
+      document.getElementById('userPoints').innerText = app.points;
+      document.getElementById('userPenalties').innerText = app.penalties;
+    }
+
+    function openSection(sectionId) {
+      const sections = document.querySelectorAll('.stage');
+      sections.forEach(sec => {
+        sec.classList.remove('active');
+      });
+      const s = document.getElementById(sectionId);
+      if (s) s.classList.add('active');
+    }
+
+    // Penalty Action
+    function wrongClassification() {
+      const okay = confirm("Wrong classification will cost 5 points. Proceed?");
+      if (!okay) return;
+      app.points = Math.max(0, app.points - 5);
+      app.penalties += 1;
+      alert("Penalty applied: −5 points");
+      updatePointsDisplay();
+    }
+
+    // Populate details based on last category
+    function fillDetails(category) {
+      app.lastCategory = category;
+      document.getElementById('lastCategory').innerText = category;
+      const data = {
+        'Organic': {
+          desc: 'Materials that biodegrade naturally: food scraps, yard trimmings, etc.',
+          disposal: 'Compost or green waste bin.',
+          tips: ['Keep separate from plastics', 'Turn compost periodically', 'Avoid chemicals']
+        },
+        'Plastic': {
+          desc: 'Plastic containers, bottles, wrappers, etc.',
+          disposal: 'Clean and recycle properly.',
+          tips: ['Rinse items', 'Flatten bottles', 'Avoid single‑use packaging']
+        },
+        'Glass': {
+          desc: 'Glass bottles, jars, etc.',
+          disposal: 'Recycle in glass bins after cleaning.',
+          tips: ['Sort by color', 'Handle broken glass carefully']
+        },
+        'Hazardous': {
+          desc: 'Dangerous/waste: batteries, chemicals, paint etc.',
+          disposal: 'Treat at hazardous waste centers.',
+          tips: ['Use safety gloves', 'Store safely', 'Follow disposal rules']
+        }
+      };
+
+      const info = data[category] || null;
+      const panel = document.getElementById('detailPanel');
+      if (!info) {
+        panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = 'block';
+      document.getElementById('detailName').innerText = category;
+      document.getElementById('detailDesc').innerText = info.desc;
+      document.getElementById('detailDisposal').innerText = info.disposal;
+      const tipsList = document.getElementById('detailTips');
+      tipsList.innerHTML = '';
+      info.tips.forEach(t => {
+        const li = document.createElement('li');
+        li.innerText = t;
+        tipsList.appendChild(li);
+      });
+    }
+
+    // Photo Identify
+    function identifyPhoto(event) {
+      const input = event.target;
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataURL = e.target.result;
+        document.getElementById('photoPreview').innerHTML = `<img src="${dataURL}" />`;
+        setTimeout(() => {
+          const cats = ['Organic','Plastic','Glass','Hazardous'];
+          const cat = cats[Math.floor(Math.random()*cats.length)];
+          app.lastCategory = cat;
+          document.getElementById('photoResult').innerText = `Identified as: ${cat}`;
+          app.points += 8;
+          updatePointsDisplay();
+        }, 1500);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // QR Scanner
+    function startQRScanner() {
+      const qrElem = "qr-reader";
+      const resultArea = document.getElementById('qrResultArea');
+      document.getElementById('stopQRBtn').classList.remove('btn-disabled');
+
+      app.qrScanner = new Html5Qrcode(qrElem);
+      const config = { fps: 10, qrbox: 250 };
+      app.qrScanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+          // got result
+          app.lastCategory = decodedText;
+          resultArea.innerText = `Scanned: ${decodedText}`;
+          app.points += 10;
+          updatePointsDisplay();
+          stopQRScanner();
+        },
+        (error) => {
+          // ignore scanning errors
+        }
+      ).catch(err => {
+        resultArea.innerText = `Error starting QR scanner: ${err}`;
+      });
+    }
+
+    function stopQRScanner() {
+      if (app.qrScanner) {
+        app.qrScanner.stop().then(() => {
+          document.getElementById('stopQRBtn').classList.add('btn-disabled');
+        }).catch(err => {
+          console.error("Error stopping QR scanner:", err);
+        });
+      }
+    }
+
+    // Mini Game
+    function startGame() {
+      openSection('GameSection');
+      app.gameTimeLeft = 30;
+      app.gameScore = 0;
+      updateGameTimer();
+      updateGameScore();
+
+      const timerEl = document.getElementById('gameTimer');
+      const scoreEl = document.getElementById('gameScore');
+
+      app.gameTimerInterval = setInterval(() => {
+        app.gameTimeLeft -= 1;
+        if (app.gameTimeLeft < 0) {
+          clearInterval(app.gameTimerInterval);
+          alert(`Game over! You scored ${app.gameScore} points.`);
+          app.points += app.gameScore;
+          updatePointsDisplay();
+        } else {
+          timerEl.innerText = `Time: ${app.gameTimeLeft}s`;
+          const inc = Math.floor(Math.random() * 5);
+          app.gameScore += inc;
+          scoreEl.innerText = `Score: ${app.gameScore}`;
+        }
+      }, 1000);
+    }
+
+    function updateGameTimer() {
+      document.getElementById('gameTimer').innerText = `Time: ${app.gameTimeLeft}s`;
+    }
+    function updateGameScore() {
+      document.getElementById('gameScore').innerText = `Score: ${app.gameScore}`;
+    }
+
+    // Web API stub functions
+    function fetchWasteCategories() {
+      const out = document.getElementById('apiCategoriesOutput');
+      out.innerText = "Loading categories from API...";
+      // mock fetch
+      setTimeout(() => {
+        const mock = ['Organic','Plastic','Glass','Hazardous','Metal','Paper'];
+        out.innerText = "Categories: " + mock.join(', ');
+      }, 1000);
+    }
+
+    function submitClassification() {
+      const out = document.getElementById('apiSubmitOutput');
+      if (!app.lastCategory) {
+        out.innerText = "No classification to submit.";
+        return;
+      }
+      out.innerText = `Submitting classification: ${app.lastCategory}...`;
+      // mock API post
+      setTimeout(() => {
+        out.innerText = "Submitted successfully!";
+      }, 1000);
+    }
+
+    // On load
+    window.addEventListener('DOMContentLoaded', () => {
+      updatePointsDisplay();
+    });
+
+  </script>
+</body>
+</html>

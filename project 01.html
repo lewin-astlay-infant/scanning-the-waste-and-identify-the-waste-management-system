@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mahashri- Waste Management Game & AI Assistant</title>
+  <meta name="description" content="Educational waste management web game with scan-to-identify, chat AI, rewards, login/signup mock flow." />
+  <style>
+    /* ==========================
+       EcoKids - Stylesheet
+       Large visual system for layout, forms, game UI, chatbox and animations
+       ========================== */
+     
+    :root{
+      --bg:#f3faf1;
+      --card:#ffffff;
+      --primary:#007718; /* green */
+      --accent:#f59e0b; /* amber */
+      --muted:#6b7280;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.7);
+      --shadow: 0 6px 18px rgba(15,23,42,0.08);
+      --radius: 14px;
+      --mono: "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    html,body{height:100%;margin:0;font-family:var(--mono);background:linear-gradient(180deg,#e6ffed 0%, #f3faf1 60%);color:#0f172a}
+
+    /* top header */
+    header.app-header{
+      position:sticky;top:0;z-index:60;backdrop-filter: blur(6px);
+      background:linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.35));
+      border-bottom:1px solid rgba(15,23,42,0.03);
+      box-shadow: 0 2px 10px rgba(2,6,23,0.03);
+      padding:12px 20px;display:flex;align-items:center;gap:16px;
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#34d399);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    .brand h1{font-size:18px;margin:0}
+
+    nav.menu{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .menu button{background:transparent;border:0;padding:8px 12px;border-radius:10px;cursor:pointer}
+    .menu .primary-btn{background:var(--primary);color:white;padding:8px 14px;border-radius:10px}
+
+    /* main layout */
+    .container{max-width:1200px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns: 360px 1fr 360px;gap:20px;align-items:start}
+
+    /* left column - user / profile / menu */
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .profile{display:flex;gap:12px;align-items:center}
+    .avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#60a5fa,#7c3aed);display:flex;align-items:center;justify-content:center;color:white;font-size:22px}
+    .user-stats{font-size:13px;color:var(--muted)}
+
+    .nav-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .nav-list button{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1px solid rgba(15,23,42,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.6),transparent);cursor:pointer}
+
+    /* center - main interactive area */
+    .main-area{display:flex;flex-direction:column;gap:16px}
+    .stage{min-height:380px}
+
+    /* scanner UI */
+    .scanner{display:grid;grid-template-columns:1fr 320px;gap:16px}
+    .scanner .camera-card{display:flex;flex-direction:column;gap:12px}
+    .camera-preview{background:#061827;border-radius:12px;height:360px;display:flex;align-items:center;justify-content:center;color:#9ca3af;overflow:hidden}
+    .camera-controls{display:flex;gap:8px}
+    .result-card{background:linear-gradient(180deg,#fff,#fbfffb);padding:12px;border-radius:12px}
+    .category-badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px dashed rgba(15,23,42,0.06);font-size:13px}
+
+    /* right column - chat + inventory */
+    .chat-box{display:flex;flex-direction:column;height:600px}
+    .chat-window{flex:1;border-radius:12px;padding:12px;overflow:auto;border:1px solid rgba(2,6,23,0.06);background:linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.6))}
+    .chat-input{display:flex;gap:8px;margin-top:8px}
+    .chat-input input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06)}
+
+    .inventory{margin-top:14px}
+    .inventory-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .waste-item{padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.04);display:flex;gap:10px;align-items:center}
+    .waste-item img{width:48px;height:48px;object-fit:cover;border-radius:8px}
+
+    /* badges & rewards */
+    .rewards{display:flex;gap:8px;margin-top:8px}
+    .reward{padding:8px;border-radius:10px;border:1px dashed rgba(0,0,0,0.06)}
+
+    /* overlays */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.4);display:flex;align-items:center;justify-content:center;z-index:120}
+    .modal .box{width:420px;background:var(--card);padding:18px;border-radius:12px}
+
+    /* forms */
+    form{display:flex;flex-direction:column;gap:10px}
+    input[type=text],input[type=password],input[type=email],select{padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06)}
+    label{font-size:13px;color:var(--muted)}
+
+    /* game HUD */
+    .hud{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(90deg,#fff,#f7fffa);border:1px solid rgba(2,6,23,0.04)}
+    .hud .points{font-size:18px;font-weight:700}
+
+    /* responsiveness */
+    @media(max-width:1100px){
+      .container{grid-template-columns:1fr;}
+      .scanner{grid-template-columns:1fr}
+      .chat-box{height:360px}
+    }
+
+    /* ==========================
+       Extra verbose comments below to help beginners read the code.
+       Many blank lines and comments intentionally included to increase file length
+       as requested. The comments explain logic and show how to customize.
+       ======================================================================= */
+
+    /*
+      THE FOLLOWING LARGE COMMENT BLOCK IS INTENTIONAL
+      It documents how the JavaScript will work at high level.
+      Keep reading or skip to the <script> section below.
+
+      1) Authentication (mock) - sign up + sign in stored in localStorage. This is
+         for demo only and should not be used in production.
+      2) Scanner - uses file input or camera (getUserMedia). When user provides an
+         image we run a simulated classifier (simple image heuristics + randomization)
+         to classify the waste into categories: Organic, Recyclable (Plastic, Paper, Metal, Glass), Hazardous, E-Waste, Other.
+      3) Inventory - when a waste is successfully identified, it is added to user's inventory
+         and the user earns points based on the category. Points are stored in localStorage.
+      4) Rewards - unlocking features like 'AI Chat' and 'Speed Mode' requires points. This shows how reward-gated features might work.
+      5) Chat AI - a simple mock AI assistant (client-only) that gives educational replies; placeholder for integration with real AI.
+      6) Simple Game Loop - daily challenge: sort X items in Y time. The game awards badges and more points.
+
+      Security note: this demo stores username/password in plain localStorage and is insecure.
+      For production use, implement server-side auth with hashed passwords and HTTPS.
+    */
+/* Buttons with Color - utility classes */
+.btn {
+  font-size: 14px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-success {
+  background-color: #10b981; /* green-400 */
+  color: white;
+}
+
+.btn-info {
+  background-color: #3b82f6; /* blue-500 */
+  color: white;
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: white;
+}
+
+.btn-warning {
+  background-color: var(--accent);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">EK</div>
+      <div>
+        <h1>EcoKids</h1>
+        <div style="font-size:12px;color:var(--muted)">Learn • Scan • Earn • Recycle</div>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <button id="menuScan">Scan Waste</button>
+      <button id="menuGame">Play Game</button>
+      <button id="menuInventory">Inventory</button>
+      <button id="openChat" class="primary-btn">Open AI Chat</button>
+      <button id="btnLogin" style="margin-left:6px">Login / Signup</button>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- LEFT COLUMN -->
+    <aside>
+      <div class="card profile">
+        <div class="avatar" id="userAvatar">G</div>
+        <div>
+          <div id="displayName">Guest</div>
+          <div class="user-stats">Points: <span id="pointsDisplay">0</span> • Badges: <span id="badgeCount">0</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h3 style="margin:0 0 8px 0">Menu</h3>
+        <div class="nav-list">
+          <button onclick="showSection('scanner')">Scan & Identify</button>
+          <button onclick="showSection('game')">Mini Game</button>
+          <button onclick="showSection('inventory')">My Inventory</button>
+          <button onclick="showSection('chat')">AI Chat</button>
+          <button onclick="showSection('rewards')">Rewards</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h3 style="margin:0 0 8px 0">Rewards</h3>
+        <div class="rewards" id="rewardsList">
+          <div class="reward">50 pts: AI Chat Access</div>
+          <div class="reward">100 pts: Speed Mode</div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- CENTER COLUMN -->
+    <section class="main-area">
+
+      <!-- HUD -->
+      <div class="hud">
+        <div>
+          <div style="font-size:14px;color:var(--muted)">Welcome to EcoKids</div>
+          <div style="font-size:12px;color:var(--muted)">Use the scanner to classify waste items and earn points</div>
+        </div>
+        <div class="points">Points: <span id="hudPoints">0</span></div>
+      </div>
+
+      <!-- Scanner stage -->
+      <div class="card stage" id="scanner">
+        <h2>Scan & Identify Waste</h2>
+        <div class="scanner">
+          <div class="camera-card">
+            <div class="camera-preview" id="cameraPreview">
+              <div id="cameraPlaceholder">
+                <div style="text-align:center">
+                  <div style="font-size:20px;margin-bottom:12px">Camera / Image Preview</div>
+                  <div style="font-size:13px;color:var(--muted)">Allow camera or upload an image</div>
+                </div>
+              </div>
+              <video id="video" style="display:none;width:100%;height:100%;object-fit:cover" autoplay muted playsinline></video>
+              <canvas id="capCanvas" style="display:none"></canvas>
+            </div>
+
+            <div class="camera-controls">
+              <label class="primary-btn" style="cursor:pointer">
+                <input id="fileInput" type="file" accept="image/*" style="display:none" />Upload Image
+              </label>
+              <button id="btnUseCamera">Use Camera</button>
+              <button id="btnCapture" disabled>Capture</button>
+              <button id="btnStopCamera" style="display:none">Stop Camera</button>
+            </div>
+
+            <div style="margin-top:8px">
+              <label>Scan Options</label>
+              <select id="scanMode">
+                <option value="auto">Auto-classify</option>
+                <option value="guided">Guided (user picks category)</option>
+                <option value="game">Game Mode (timed)</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="result-card">
+            <h3>Result</h3>
+            <div id="resultArea">
+              <div style="font-size:14px;color:var(--muted)">No scan yet.</div>
+            </div>
+
+            <div style="margin-top:10px">
+              <button id="btnAddToInventory" disabled>Add to Inventory & Earn</button>
+              <button id="btnFeedback" style="margin-left:8px">Report wrong classification</button>
+            </div>
+
+            <div style="margin-top:12px">
+              <h4>How scanning works (demo)</h4>
+              <ol style="font-size:13px;color:var(--muted)">
+                <li>Upload or capture an image of the waste item.</li>
+                <li>The system runs a lightweight heuristic classifier (client-side) to guess the category.</li>
+                <li>If correct, add the item to your inventory and earn points.</li>
+                <li>Use points to unlock chat AI and game modes.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game section -->
+      <div class="card stage" id="game" style="display:none">
+        <h2>Mini Game - Sort the Waste</h2>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="flex:1">
+            <p style="color:var(--muted)">Sort as many items as you can in 60 seconds. Drag items into the correct bin. Earn bonus points for streaks.</p>
+            <div id="gameArea" style="min-height:240px;border:1px dashed rgba(2,6,23,0.06);padding:12px;border-radius:12px">
+              <div id="gameItems" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            </div>
+          </div>
+          <div style="width:240px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:13px">Bins</div>
+              <div id="bins" style="display:flex;flex-direction:column;gap:6px">
+                <div class="bin" data-cat="organic" style="padding:12px;border-radius:10px;border:1px solid rgba(2,6,23,0.04)">Organic</div>
+                <div class="bin" data-cat="recyclable" style="padding:12px;border-radius:10px;border:1px solid rgba(2,6,23,0.04)">Recyclable</div>
+                <div class="bin" data-cat="hazardous" style="padding:12px;border-radius:10px;border:1px solid rgba(2,6,23,0.04)">Hazardous</div>
+                <div class="bin" data-cat="ewaste" style="padding:12px;border-radius:10px;border:1px solid rgba(2,6,23,0.04)">E-Waste</div>
+              </div>
+
+              <div style="margin-top:8px">
+                <div>Time: <span id="gameTime">60</span>s</div>
+                <div>Score: <span id="gameScore">0</span></div>
+                <button id="btnStartGame">Start Game</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory section -->
+      <div class="card stage" id="inventory" style="display:none">
+        <h2>My Inventory</h2>
+        <div class="inventory-grid" id="inventoryGrid"></div>
+      </div>
+
+      <!-- Rewards & gating -->
+      <div class="card stage" id="rewards" style="display:none">
+        <h2>Rewards & Unlocks</h2>
+        <div id="rewardsArea">
+          <p style="color:var(--muted)">Spend points to unlock features. (Demo: points are kept locally.)</p>
+          <div style="display:flex;gap:8px">
+            <button id="unlockChat">Unlock AI Chat (50 pts)</button>
+            <button id="unlockSpeed">Unlock Speed Mode (100 pts)</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <aside>
+      <div class="card chat-box" id="chat">
+        <h3 style="margin:0 0 6px 0">AI Chat Assistant</h3>
+        <div class="chat-window" id="chatWindow">
+          <div style="font-size:13px;color:var(--muted)">Chat is locked until you earn 50 points. The chat is a demo assistant for waste sorting tips.</div>
+        </div>
+        <div class="chat-input">
+          <input id="chatInput" placeholder="Ask EcoBot a question..." disabled />
+          <button id="sendChat" disabled>Send</button>
+        </div>
+
+        <div class="card inventory" style="margin-top:12px">
+          <h4 style="margin:0 0 8px 0">Quick Inventory</h4>
+          <div id="quickInventory" class="inventory-grid"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h3>Badges</h3>
+        <div id="badgesList" style="display:flex;gap:8px;flex-wrap:wrap">
+          <!-- badges will appear here -->
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Modals: login/signup, feedback -->
+  <div id="authModal" class="modal" style="display:none">
+    <div class="box">
+      <h3 id="authTitle">Login</h3>
+      <form id="authForm">
+        <div>
+          <label>Username</label>
+          <input type="text" id="authUser" required />
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="authEmail" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="authPass" required />
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button type="button" id="switchAuth">Switch to Signup</button>
+          <button type="submit" class="primary-btn">Continue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="feedbackModal" class="modal" style="display:none">
+    <div class="box">
+      <h3>Report wrong classification</h3>
+      <form id="feedbackForm">
+        <label>Why was the classification wrong?</label>
+        <textarea id="feedbackText" style="width:100%;height:90px;padding:8px;border-radius:8px;border:1px solid rgba(2,6,23,0.06)"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button type="button" id="closeFeedback">Close</button>
+          <button type="submit" class="primary-btn">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Large JS section implementing features, mocked AI, scanner heuristics, game, rewards and auth -->
+  <script>
+    /* ======================================================
+       EcoKids - Client-side JavaScript
+       NOTE: This is a demo. Save/Load uses localStorage only.
+       ====================================================== */
+
+    // ---------------------- Utilities ----------------------
+    const qs = (s) => document.querySelector(s);
+    const qsa = (s) => Array.from(document.querySelectorAll(s));
+
+    // Simple local storage helpers
+    const db = {
+      get(key, fallback){
+        try{const v = localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}
+      },
+      set(key, val){localStorage.setItem(key, JSON.stringify(val))}
+    }
+
+    // Default app state
+    const state = {
+      user: db.get('ek_user', {logged:false, name:'Guest', username:'guest', points:0, inventory:[], badges:[]}),
+      cameraStream: null,
+      unlocked: db.get('ek_unlocked', {chat:false,speed:false})
+    }
+
+    // Initialize UI with saved state
+    function initUI(){
+      updateUserUI();
+      renderInventory();
+      renderBadges();
+      updatePointsDisplay();
+      if(state.unlocked.chat) enableChat();
+    }
+
+    function updateUserUI(){
+      qs('#displayName').innerText = state.user.logged?state.user.name: 'Guest';
+      qs('#userAvatar').innerText = (state.user.name||'G').slice(0,1).toUpperCase();
+      qs('#pointsDisplay').innerText = state.user.points;
+      qs('#hudPoints').innerText = state.user.points;
+    }
+
+    function updatePointsDisplay(){
+      qs('#pointsDisplay').innerText = state.user.points;
+      qs('#hudPoints').innerText = state.user.points;
+      qs('#pointsDisplay').dataset.val = state.user.points;
+    }
+
+    function saveState(){
+      db.set('ek_user', state.user);
+      db.set('ek_unlocked', state.unlocked);
+    }
+
+    // ---------------------- Authentication (mock) ----------------------
+    const authModal = qs('#authModal');
+    let authMode = 'login';
+    qs('#btnLogin').addEventListener('click', ()=>openAuth('login'));
+    qs('#authForm').addEventListener('submit', onAuthSubmit);
+    qs('#switchAuth').addEventListener('click', ()=> openAuth(authMode==='login'?'signup':'login'));
+
+    function openAuth(mode='login'){
+      authMode = mode;
+      qs('#authTitle').innerText = mode==='login'?'Login':'Sign Up';
+      qs('#authEmail').style.display = mode==='login'?'none':'block';
+      authModal.style.display = 'flex';
+    }
+
+    function closeAuth(){authModal.style.display='none'}
+
+    function onAuthSubmit(e){
+      e.preventDefault();
+      const username = qs('#authUser').value.trim();
+      const password = qs('#authPass').value;
+      const email = qs('#authEmail').value.trim();
+
+      if(authMode==='signup'){
+        if(!username || !password || !email){alert('Please fill all fields');return}
+        // Save user (demo) - NOTE: insecure storing!
+        state.user = {logged:true,name:username,username,points:0,inventory:[],badges:[]};
+        saveState();
+        closeAuth();
+        initUI();
+        alert('Signup successful — welcome, '+username);
+      } else {
+        // login - demo only: accept any username/password
+        if(!username || !password){alert('Please enter username and password');return}
+        state.user = db.get('ek_user', {logged:true,name:username,username,points:0,inventory:[],badges:[]});
+        state.user.logged = true;
+        saveState();
+        closeAuth();
+        initUI();
+        alert('Logged in as '+username);
+      }
+    }
+
+    // click outside to close modals
+    document.addEventListener('click', (e)=>{
+      if(e.target===authModal) closeAuth();
+      if(e.target===qs('#feedbackModal')) qs('#feedbackModal').style.display='none';
+    })
+
+    // ---------------------- Scanner / Camera ----------------------
+    const fileInput = qs('#fileInput');
+    const video = qs('#video');
+    const capCanvas = qs('#capCanvas');
+    const cameraPreview = qs('#cameraPreview');
+    const btnUseCamera = qs('#btnUseCamera');
+    const btnCapture = qs('#btnCapture');
+    const btnStopCamera = qs('#btnStopCamera');
+
+    fileInput.addEventListener('change', async (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const url = URL.createObjectURL(f);
+      displayImagePreview(url);
+      const img = await loadImage(url);
+      processImageForClassification(img);
+    });
+
+    btnUseCamera.addEventListener('click', async ()=>{
+      try{
+        const s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        state.cameraStream = s;
+        video.srcObject = s; video.style.display='block';
+        qs('#cameraPlaceholder').style.display='none';
+        btnCapture.disabled = false; btnStopCamera.style.display='inline-block';
+      }catch(err){alert('Could not access camera: '+err.message)}
+    });
+
+    btnCapture.addEventListener('click', ()=>{
+      const w = video.videoWidth; const h = video.videoHeight;
+      capCanvas.width = w; capCanvas.height = h;
+      const ctx = capCanvas.getContext('2d');
+      ctx.drawImage(video,0,0,w,h);
+      const dataUrl = capCanvas.toDataURL('image/png');
+      displayImagePreview(dataUrl);
+      loadImage(dataUrl).then(img=>processImageForClassification(img));
+    });
+
+    btnStopCamera.addEventListener('click', ()=>{
+      if(state.cameraStream){
+        state.cameraStream.getTracks().forEach(t=>t.stop());
+        state.cameraStream = null; video.style.display='none'; qs('#cameraPlaceholder').style.display='block'; btnCapture.disabled=true; btnStopCamera.style.display='none';
+      }
+    });
+
+    function displayImagePreview(src){
+      // remove existing preview image
+      const existing = cameraPreview.querySelector('img.preview');
+      if(existing) existing.remove();
+      const img = document.createElement('img'); img.src = src; img.className='preview'; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; img.onload=()=>{ /* loaded */ }
+      cameraPreview.appendChild(img);
+    }
+
+    function loadImage(src){
+      return new Promise((resolve)=>{
+        const img = new Image(); img.crossOrigin='anonymous'; img.onload = ()=>resolve(img); img.src = src;
+      })
+    }
+
+    // ---------------------- Classification (SIMULATED) ----------------------
+    // The classification below is intentionally simple for demo purposes.
+    // It uses color and size heuristics + randomness to guess category.
+
+    function processImageForClassification(img){
+      // draw into canvas and sample pixels
+      const c = document.createElement('canvas'); const w = 200; const h = Math.round(img.height*(200/img.width)); c.width=w; c.height=h;
+      const ctx = c.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+      const data = ctx.getImageData(0,0,w,h).data;
+      let r=0,g=0,b=0,count=0;
+      for(let i=0;i<data.length;i+=4*10){ // sample every 10th pixel to be fast
+        r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++;
+      }
+      r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
+
+      // compute simple "green score" which suggests organic
+      const greenScore = g - (r*0.7 + b*0.7)/1.4;
+      const bright = (r+g+b)/3;
+
+      // randomization for fun and unpredictability in demo
+      const rnd = Math.random();
+
+      let predicted = 'other'; let confidence = 0.45;
+      if(greenScore>30 && rnd>0.2){ predicted='organic'; confidence=0.6 + rnd*0.3 }
+      else if(bright>200 && rnd>0.2){ predicted='glass'; confidence=0.6 + rnd*0.2 }
+      else if(r>150 && g>120 && b<110 && rnd>0.25){ predicted='plastic'; confidence=0.55 + rnd*0.25 }
+      else if(rnd>0.85) { predicted='ewaste'; confidence=0.7 }
+      else if(rnd>0.7){ predicted='recyclable'; confidence=0.55 + rnd*0.2 }
+      else predicted = ['plastic','paper','metal','glass','organic'][Math.floor(Math.random()*5)];
+
+      showClassificationResult(predicted, Math.round(confidence*100));
+    }
+
+    function showClassificationResult(cat, conf){
+      const area = qs('#resultArea'); area.innerHTML = '';
+      const img = cameraPreview.querySelector('img.preview');
+      if(img){
+        const thumb = document.createElement('img'); thumb.src = img.src; thumb.style.width='100%'; thumb.style.borderRadius='8px';
+        area.appendChild(thumb);
+      }
+      const row = document.createElement('div'); row.style.marginTop='8px';
+      row.innerHTML = `<strong>Category:</strong> <span class="category-badge">${cat.toUpperCase()}</span>  <span style="margin-left:8px;color:var(--muted)">Confidence: ${conf}%</span>`;
+      area.appendChild(row);
+
+      // details
+      const info = document.createElement('div'); info.style.marginTop='8px'; info.style.fontSize='13px'; info.style.color='var(--muted)';
+      info.innerHTML = getCategoryInfo(cat);
+      area.appendChild(info);
+
+      // enable add button
+      const addBtn = qs('#btnAddToInventory'); addBtn.disabled=false;
+      addBtn.dataset.cat = cat; addBtn.dataset.conf = conf;
+      // also show guidance
+      const guidance = document.createElement('div'); guidance.style.marginTop='8px'; guidance.style.fontSize='13px'; guidance.style.color='var(--muted)';
+      guidance.innerHTML = `<strong>Tip:</strong> ${getCategoryTip(cat)}`;
+      area.appendChild(guidance);
+    }
+
+    function getCategoryInfo(cat){
+      const map = {
+        organic: 'Organic waste (food scraps, garden waste). Best to compost if possible.',
+        plastic: 'Plastic items (bottles, packaging). Rinse and recycle if accepted by local recycling.',
+        paper: 'Paper & cardboard. Keep dry and free from food residue.',
+        metal: 'Metal cans & foil. Crush and recycle where possible.',
+        glass: 'Glass bottles & jars. Recycle carefully and avoid broken glass.',
+        ewaste: 'E-waste (small electronics). Take to authorized e-waste collection points.',
+        hazardous: 'Hazardous waste (batteries, chemicals). Handle safely and dispose at hazardous centers.',
+        recyclable: 'General recyclable materials — check local rules for sorting.',
+        other: 'Uncategorized item. Use your best judgment or check local disposal rules.'
+      };
+      return map[cat] || map['other'];
+    }
+
+    function getCategoryTip(cat){
+      const tips = {
+        organic: 'Try a home composter or a community compost drop-off.',
+        plastic: 'Reduce single-use plastics. Reuse or choose alternatives where possible.',
+        paper: 'Flatten cardboard to save space in bins.',
+        metal: 'Rinse and separate metals when possible.',
+        glass: 'Store glass separately to avoid contamination.',
+        ewaste: 'Don’t throw electronics in regular trash — find e-waste events.',
+        hazardous: 'Contact your local hazardous waste authority for collection dates.',
+        recyclable: 'Clean and dry recyclables to prevent contamination.',
+        other: 'If unsure, hold the item and search local guidelines online.'
+      };
+      return tips[cat] || tips['other'];
+    }
+
+    // ---------------------- Add to inventory & scoring ----------------------
+    qs('#btnAddToInventory').addEventListener('click', ()=>{
+      const cat = qs('#btnAddToInventory').dataset.cat || 'other';
+      const conf = parseInt(qs('#btnAddToInventory').dataset.conf || '50');
+      const img = cameraPreview.querySelector('img.preview');
+      const src = img?img.src:null;
+      addItemToInventory(cat, src, conf);
+    });
+
+    function addItemToInventory(cat, src, conf){
+      const points = pointsForCategory(cat, conf);
+      const id = 'i_'+Date.now();
+      const item = {id,category:cat,src,points,added:new Date().toISOString()};
+      state.user.inventory.push(item);
+      state.user.points += points;
+      // small badge logic
+      if(state.user.points>=50 && !state.unlocked.chat) {
+        // suggestion to unlock chat
+      }
+      saveState(); updateUserUI(); renderInventory(); renderBadges();
+      alert('Added to inventory. You earned '+points+' points!');
+      // lock or unlock chat based on points
+      if(state.user.points>=50 && !state.unlocked.chat){
+        // prompt to unlock
+        const should = confirm('You have 50+ points. Unlock AI Chat for free now?');
+        if(should){ state.unlocked.chat=true; saveState(); enableChat(); alert('Chat unlocked!') }
+      }
+    }
+
+    function pointsForCategory(cat, conf){
+      const base = {organic:5,plastic:8,paper:6,metal:10,glass:7,ewaste:20,hazardous:15,recyclable:8,other:3};
+      return Math.max(1, Math.round((base[cat]||4) * (conf/60)));
+    }
+
+    function renderInventory(){
+      const g = qs('#inventoryGrid'); g.innerHTML='';
+      const q = qs('#quickInventory'); q.innerHTML='';
+      state.user.inventory.slice().reverse().forEach(it=>{
+        const div = document.createElement('div'); div.className='waste-item';
+        const img = document.createElement('img'); img.src = it.src || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#e6ffed"/></svg>';
+        const info = document.createElement('div'); info.style.fontSize='13px'; info.innerHTML = `<div style="font-weight:700">${it.category}</div><div style="font-size:12px;color:var(--muted)">+${it.points} pts • ${new Date(it.added).toLocaleString()}</div>`;
+        div.appendChild(img); div.appendChild(info); g.appendChild(div);
+
+        // quick inventory
+        const qi = div.cloneNode(true); q.appendChild(qi);
+      });
+    }
+
+    // ---------------------- Chat AI (mock) ----------------------
+    const chatWindow = qs('#chatWindow'); const chatInput = qs('#chatInput'); const sendChat = qs('#sendChat');
+    qs('#openChat').addEventListener('click', ()=> showSection('chat'));
+    sendChat.addEventListener('click', ()=> sendMessage());
+    chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); })
+
+    function enableChat(){
+      chatWindow.innerHTML=''; chatInput.disabled=false; sendChat.disabled=false;
+      appendBot('Hi! I\'m EcoBot — ask me how to sort waste, compost, or find recycling ideas.');
+    }
+
+    function appendUser(msg){
+      const el = document.createElement('div'); el.style.textAlign='right'; el.style.margin='6px 0'; el.innerHTML = `<div style="display:inline-block;background:#dcfce7;padding:10px;border-radius:10px">${escapeHtml(msg)}</div>`; chatWindow.appendChild(el); chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    function appendBot(msg){
+      const el = document.createElement('div'); el.style.textAlign='left'; el.style.margin='6px 0'; el.innerHTML = `<div style="display:inline-block;background:#fff;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.04)">${escapeHtml(msg)}</div>`; chatWindow.appendChild(el); chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function escapeHtml(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+    function sendMessage(){
+      const text = chatInput.value.trim(); if(!text) return; appendUser(text); chatInput.value='';
+      // mocked AI replies using simple rule-based responses
+      setTimeout(()=>{
+        const reply = generateBotReply(text.toLowerCase()); appendBot(reply);
+      }, 700 + Math.random()*900);
+    }
+
+    function generateBotReply(text){
+      if(text.includes('compost')) return 'Composting is great! You can compost fruit and vegetable scraps, coffee grounds, and yard waste. Avoid meat and dairy in small home composts.';
+      if(text.includes('recycl') || text.includes('plastic') || text.includes('paper')) return 'Check your local rules — usually plastics labeled 1&2 are widely recyclable. Keep items clean and dry before recycling.';
+      if(text.includes('ewaste') || text.includes('electronics')) return 'E-waste should be taken to authorized drop-off points. Many cities have collection days for small electronics and batteries.';
+      if(text.includes('how') && text.includes('sort')) return 'Try sorting into 4 bins: organic, recyclable, hazardous, and e-waste. Label them clearly and keep recyclables clean.';
+      if(text.includes('reward') || text.includes('points')) return 'You earn points for each correctly identified item. Points unlock features like chat and speed mode.';
+      // fallback helpful prompt
+      return 'Great question! For that, try describing the item (material, size) or ask about local disposal rules — I\'ll help.';
+    }
+
+    // ---------------------- Feedback modal ----------------------
+    qs('#btnFeedback').addEventListener('click', ()=> qs('#feedbackModal').style.display='flex');
+    qs('#closeFeedback').addEventListener('click', ()=> qs('#feedbackModal').style.display='none');
+    qs('#feedbackForm').addEventListener('submit', (e)=>{ e.preventDefault(); alert('Thanks for your feedback!'); qs('#feedbackModal').style.display='none'; })
+
+    // ---------------------- Game logic ----------------------
+    let gameTimer = null; let gameTime = 60; let gameScore = 0; let gameRunning=false;
+    qs('#btnStartGame').addEventListener('click', startGame);
+
+    function startGame(){
+      if(gameRunning){ stopGame(); return }
+      gameTime = 60; gameScore = 0; gameRunning=true; qs('#gameTime').innerText = gameTime; qs('#gameScore').innerText = gameScore;
+      populateGameItems(8);
+      gameTimer = setInterval(()=>{
+        gameTime--; qs('#gameTime').innerText=gameTime;
+        if(gameTime<=0) stopGame();
+      },1000);
+    }
+
+    function stopGame(){ clearInterval(gameTimer); gameRunning=false; alert('Game over! Score: '+gameScore); // award points
+      state.user.points += gameScore; saveState(); updateUserUI(); renderBadges(); renderInventory();
+    }
+
+    function populateGameItems(n){
+      const pool = ['banana','bottle','phone','can','paper','brokenGlass','battery','pizza'];
+      const gameItems = qs('#gameItems'); gameItems.innerHTML='';
+      for(let i=0;i<n;i++){
+        const name = pool[Math.floor(Math.random()*pool.length)];
+        const div = document.createElement('div'); div.className='game-item'; div.style.padding='8px;borderRadius='+'8px'; div.style.border='1px solid rgba(2,6,23,0.04)'; div.style.cursor='grab'; div.draggable=true; div.dataset.cat = mapNameToCategory(name);
+        div.innerText = name;
+        div.addEventListener('dragstart', onDragStart);
+        gameItems.appendChild(div);
+      }
+      qsa('.bin').forEach(b=>{ b.addEventListener('dragover', e=>e.preventDefault()); b.addEventListener('drop', onDropToBin); });
+    }
+
+    function mapNameToCategory(name){
+      if(['banana','pizza'].includes(name)) return 'organic';
+      if(['bottle','paper','can'].includes(name)) return 'recyclable';
+      if(['phone','battery'].includes(name)) return 'ewaste';
+      if(name==='brokenGlass') return 'hazardous';
+      return 'other';
+    }
+
+    let dragged = null;
+    function onDragStart(e){ dragged = e.target }
+    function onDropToBin(e){
+      const bin = e.currentTarget; const expected = bin.dataset.cat; if(!dragged) return;
+      const actual = dragged.dataset.cat; if(actual===expected){
+        gameScore += 10; qs('#gameScore').innerText = gameScore; dragged.remove();
+      } else { gameScore -= 2; qs('#gameScore').innerText = gameScore; }
+      dragged = null;
+    }
+
+    // ---------------------- Rewards / Unlocks ----------------------
+    qs('#unlockChat').addEventListener('click', ()=>{
+      if(state.user.points>=50){ state.unlocked.chat=true; saveState(); enableChat(); alert('Chat unlocked!'); } else alert('You need 50 points to unlock chat.');
+    });
+    qs('#unlockSpeed').addEventListener('click', ()=>{
+      if(state.user.points>=100){ state.unlocked.speed=true; saveState(); alert('Speed mode unlocked!'); } else alert('You need 100 points to unlock speed mode.');
+    });
+
+    // ---------------------- Badges ----------------------
+    function renderBadges(){
+      const list = qs('#badgesList'); list.innerHTML='';
+      // simple badge rules
+      const badges = [];
+      if(state.user.points>=50) badges.push({id:'pioneer',name:'Pioneer',desc:'Earn 50 points'});
+      if(state.user.inventory.length>=10) badges.push({id:'collector',name:'Collector',desc:'Add 10 items to inventory'});
+      if(state.user.inventory.some(i=>i.category==='ewaste')) badges.push({id:'techwise',name:'Techwise',desc:'E-waste recycler'});
+      state.user.badges = badges;
+      badges.forEach(b=>{ const el = document.createElement('div'); el.style.padding='8px'; el.style.borderRadius='8px'; el.style.border='1px solid rgba(2,6,23,0.04)'; el.innerHTML = `<strong>${b.name}</strong><div style="font-size:12px;color:var(--muted)">${b.desc}</div>`; list.appendChild(el); })
+      qs('#badgeCount').innerText = badges.length;
+    }
+
+    // ---------------------- Simple navigation ----------------------
+    function showSection(id){ qsa('.stage').forEach(s=>s.style.display='none'); qs('#'+id).style.display='block'; }
+
+    // ---------------------- Small helpers ----------------------
+    qs('#menuScan').addEventListener('click', ()=> showSection('scanner'));
+    qs('#menuGame').addEventListener('click', ()=> showSection('game'));
+    qs('#menuInventory').addEventListener('click', ()=> showSection('inventory'));
+
+    // ---------------------- Initial boot ----------------------
+    initUI();
+
+    // ======================
+    // Extra verbose footer comments
+    // ======================
+    // This file contains intentionally detailed comments and code examples to help learners.
+    // You can extend the classifier by integrating a proper ML model (TensorFlow.js or a server API)
+    // Replace mock auth with a secure backend API and never store plaintext passwords in localStorage.
+    // Add a server endpoint to persist user progress across devices.
+
+    // ---------------------- End of script ----------------------
+  </script>
+</body>
+</html>
